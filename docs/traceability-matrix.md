@@ -13,7 +13,7 @@ claiming otherwise would collapse under supervisor questioning.
 | 4 | Role-based access (user/admin) | `role` on User, `adminOnly` middleware, admin router guard | Admin-only seed/train exercised Oct 8 | ✅ Done |
 | 5 | Live parking slot grid with available/occupied states | `frontend/src/pages/Dashboard.jsx`, `GET /api/slots`, Socket.io `slots:update` | Live dashboard verified Oct 8–9 | ✅ Done |
 | 6 | Slot management by admin (create/update/delete, unique IDs) | `backend/src/routes/slots.js`, `slotId` unique index in `models/Slot.js` | API executed Oct 8 | ✅ Done |
-| 7 | ESP32 + HC-SR04 occupancy sensing | `firmware/parqco_sensor.ino` (2 s sampling, debounce, 60 s heartbeat) | Code complete; **not yet flashed to physical hardware** | ⚠️ Partial — hardware test pending |
+| 7 | Virtual IoT sensor simulation (ESP32-compatible API) | `backend/scripts/simulate-sensors.js` (flips a random slot every 3 s) | Code complete; **tested live locally on 25 November 2026 - the backend accepted the simulator readings** | ⚠️ Done - virtual only, no hardware test needed |
 | 8 | Safe sensor wiring (5 V echo vs 3.3 V GPIO) | `docs/wiring-guide.md` (1 kΩ/2 kΩ divider) | Doc written Oct 9 | ✅ Done (doc) |
 | 9 | Protected sensor ingestion | `POST /api/sensor-data` + `middleware/apiKey.js` (`x-api-key`) | Tested Oct 8; wrong key rejected | ✅ Done |
 | 10 | Occupancy history storage | `backend/src/models/SensorData.js` (append-only, indexed by slot/time) | Seed + ingest wrote history Oct 8 | ✅ Done |

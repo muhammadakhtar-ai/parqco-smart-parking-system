@@ -1,11 +1,11 @@
 # PARQCO – Smart Parking Management System with AI Predictions
 
 A full-stack project built from the SRS and SDD documents: **React** dashboard, **Node.js/Express** API,
-**MongoDB** database, **ESP32 + ultrasonic** IoT sensors and a **forecasting module** that predicts peak hours.
+**MongoDB** database, **virtual** IoT sensors (an ESP32-compatible sensor simulator) and a **forecasting module** that predicts peak hours.
 
 ```
 IoT sensors ──► Node.js API ──► MongoDB ──► Forecast service ──► React UI
- (ESP32)        (Express)      (Mongoose)   (peak-hour model)    (live via Socket.IO)
+ (Simulator)        (Express)      (Mongoose)   (peak-hour model)    (live via Socket.IO)
 ```
 
 ## Run it locally in VS Code (5 minutes)
@@ -42,7 +42,7 @@ For quick local testing without any e-mail, set `OTP_DEV_MODE=true` and the code
 Every booking produces a challan number (for example `CH-20261025-0001`) with the driver name and vehicle registration number.
 The driver sees it right after booking and can download the PDF slip from *My bookings* at any time.
 
-**See it live:** open a second terminal and run `npm run simulate`. A fake ESP32 flips random slots every 3 seconds and the dashboard updates without a refresh.
+**See it live:** open a second terminal and run `npm run simulate`. A virtual sensor flips random slots every 3 seconds and the dashboard updates without a refresh.
 
 ## Folder structure
 
@@ -58,7 +58,7 @@ parqco/
 │   │   ├── services/      slotStatus (live status), predictionService (ML)
 │   │   ├── sockets/       Socket.IO live updates
 │   │   └── utils/         seed script, ApiError, asyncHandler
-│   └── scripts/simulate-sensors.js
+│   └── scripts/simulate-sensors.js   (virtual IoT sensor simulator)
 ├── frontend/
 │   └── src/
 │       ├── pages/         Landing, Login, Register, Dashboard, BookSlot, MyBookings, Predictions
@@ -67,14 +67,13 @@ parqco/
 │       ├── context/       AuthContext (login state)
 │       ├── api/           axios client + socket
 │       └── styles/        global.css (design tokens first, then components)
-└── esp32/parqco_esp32.ino   firmware for the real sensor
 ```
 
 ## How each part works
 
 **Request flow (backend):** route → middleware (auth/validation) → controller → model → JSON response. Errors are thrown with `ApiError` and formatted in one place (`middleware/errorHandler.js`).
 
-**Slot status.** The sensor sets the physical state (`available` / `occupied`). A booking that covers "now" shows the slot as `reserved`. Admins can set `maintenance`. `services/slotStatus.js` combines these into one value for the UI.
+**Slot status.** The virtual sensor reports the physical state (`available` / `occupied`). A booking that covers "now" shows the slot as `reserved`. Admins can set `maintenance`. `services/slotStatus.js` combines these into one value for the UI.
 
 **Booking rules.** Start cannot be in the past, a booking is at most 24 hours, and the server rejects any time overlap on the same slot. The price is hours (rounded up) × the slot’s hourly rate.
 
@@ -96,16 +95,18 @@ parqco/
 | GET | `/api/bookings/my` | user | My bookings |
 | DELETE | `/api/bookings/:id` | owner/admin | Cancel |
 | GET | `/api/bookings` | admin | All bookings |
-| POST | `/api/sensor-data` | device key | ESP32 reading |
+| POST | `/api/sensor-data` | device key | Virtual sensor reading |
 | GET | `/api/sensors` | admin | Sensor health |
 | GET | `/api/predictions/today`, `/weekly` | user | Forecast |
 | GET | `/api/admin/stats`, `/admin/users` | admin | Admin data |
 
-## Using the real ESP32
+## IoT layer - virtual sensors
 
-1. Open `esp32/parqco_esp32.ino` in Arduino IDE (install the ESP32 board package).
-2. Set your WiFi name and password, `API_URL` (your computer’s IP, for example `http://192.168.1.50:5000/api/sensor-data`) and `SENSOR_ID` (a sensor that exists in the Slots page).
-3. Upload. Put the laptop and the ESP32 on the same WiFi, and allow port 5000 in your firewall.
+This project uses no physical sensor hardware. Slot occupancy is simulated by `backend/scripts/simulate-sensors.js` - a virtual ESP32 that sends exactly the same `POST /api/sensor-data` readings (with the `x-device-key` header) that a real device would send.
+
+To run it: start the API, then in the `backend` folder run `npm run simulate`. A random slot flips between available and occupied every 3 seconds, and every open dashboard updates live via Socket.IO.
+
+A real ESP32 can be connected later with no backend change, because the API endpoint, header and body format are already device-compatible.
 
 ## Before you deploy for real
 
@@ -116,4 +117,4 @@ parqco/
 
 ## SRS/SDD coverage
 
-Slot detection (ESP32 + ultrasonic) ✔ · real-time dashboard ✔ · AI prediction ✔ · notification of availability (live badge and updates) ✔ · admin panel ✔ · online booking (listed as a future enhancement in the SRS, included here because the SDD UI shows it) ✔ · payments, mobile app and camera detection are left out as in the SRS future work.
+Slot detection (virtual IoT sensor simulation) ✔ · real-time dashboard ✔ · AI prediction ✔ · notification of availability (live badge and updates) ✔ · admin panel ✔ · online booking (listed as a future enhancement in the SRS, included here because the SDD UI shows it) ✔ · payments, mobile app and camera detection are left out as in the SRS future work.

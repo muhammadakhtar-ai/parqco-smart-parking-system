@@ -2,14 +2,14 @@
 
 ## System in one paragraph
 
-ESP32 units with HC-SR04 ultrasonic sensors watch individual parking
-slots and POST occupancy readings over WiFi to a Node.js/Express
+A virtual IoT sensor simulator watches individual parking
+slots and POSTs occupancy readings to a Node.js/Express
 backend. The backend stores readings and slot state in MongoDB Atlas,
 pushes live updates to the React frontend over Socket.io, and delegates
 forecasting to a Python (FastAPI + scikit-learn) ML service that reads
 the same database. Users register, log in (JWT), view the live slot
 map, book slots, and see AI occupancy predictions; admins manage slots,
-seed/train the model, and toggle a demo simulator.
+seed/train the model, and run the virtual sensor simulator.
 
 ## Components
 
@@ -19,13 +19,13 @@ seed/train the model, and toggle a demo simulator.
 | Backend | Node.js + Express, Mongoose, Socket.io, bcrypt, JWT, express-rate-limit | Render — parqco.onrender.com | `backend/` |
 | ML service | Python, FastAPI, scikit-learn (RandomForest), pymongo | Render (second service) | `ml-service/` |
 | Database | MongoDB Atlas (free M0) | Atlas cloud | — |
-| Firmware | Arduino C++ (ESP32) | Physical ESP32 per sensor group | `firmware/` |
+| IoT sensor layer | Node.js virtual sensor simulator (ESP32-compatible API) | Demo machine / server | `backend/scripts/simulate-sensors.js` |
 
 ## Data flow
 
-1. **Sense:** ESP32 samples each HC-SR04 every 2 s, debounces state
-   changes, POSTs `{sensorId, slotId, occupied, distanceCm}` to
-   `POST /api/sensor-data` with the `x-api-key` header.
+1. **Sense:** The virtual sensor simulator flips a random slot every 3 s
+   and POSTs `{sensorId, occupied, battery}` to
+   `POST /api/sensor-data` with the `x-device-key` header.
 2. **Store:** Backend validates the API key, updates the `Slot`
    document (status, lastSeenAt) and appends a `SensorData` reading.
 3. **Push:** Backend emits `slots:update` / `stats:update` over
@@ -55,7 +55,7 @@ History is its own collection of small documents (not an array inside
 - Passwords hashed with bcrypt; JWT for session auth; role middleware
   (`auth`, `adminOnly`) on protected/admin routes.
 - Sensor ingestion is **not** open: it requires the shared
-  `ESP32_API_KEY` header, so anyone cannot fake occupancy.
+  `DEVICE_API_KEY` value in the `x-device-key` header, so occupancy cannot be faked without the device key.
 - Secrets live only in platform env vars / local `.env` files
   (git-ignored); the frontend only ever receives `VITE_API_URL`.
 - API rate limiting (300 req/min per IP). Behind Render's proxy the
@@ -69,8 +69,8 @@ History is its own collection of small documents (not an array inside
   treats it as core. PARQCO implements it (SDD wins — decision
   recorded in the traceability matrix).
 - **Protocol:** SRS/SDD disagree on HTTP vs MQTT; REST over HTTP was
-  chosen — simpler on free tiers, and the ESP32 library support is
-  solid. MQTT remains future work.
+  chosen — simpler on free tiers, and plain HTTP works for both the virtual simulator and a future physical device.
+  MQTT remains future work.
 - **Notifications:** in-dashboard alerts only; no email/SMS/push.
 - **Offline state:** a silent sensor is inferred from a stale
   `lastSeenAt`; there is no separate `offline` enum on slots.

@@ -30,7 +30,7 @@ const steps = [
 ];
 
 const features = [
-  { icon: Radio, title: 'Real-time slot detection', text: 'ESP32 boards and ultrasonic sensors push every change to the server instantly.' },
+  { icon: Radio, title: 'Real-time slot detection', text: 'Virtual IoT sensors push every change to the server instantly.' },
   { icon: LineChart, title: 'AI peak-hour forecasts', text: 'Hourly occupancy predictions with a confidence score, based on four weeks of history.' },
   { icon: Smartphone, title: 'Works on any screen', text: 'A responsive web app for drivers on phones and for staff at the front desk.' },
   { icon: ShieldCheck, title: 'Admin control panel', text: 'Manage slots, bookings, users and sensor health from one place.' },

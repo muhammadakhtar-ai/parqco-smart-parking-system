@@ -3,7 +3,7 @@
 Base URL (production): `https://parqco.onrender.com`
 All responses are JSON. Errors return `{ "error": "<message>" }` with a
 matching HTTP status. Auth uses `Authorization: Bearer <JWT>` unless
-noted. Sensor ingestion uses the `x-api-key: <ESP32_API_KEY>` header.
+noted. Sensor ingestion uses the `x-device-key: <DEVICE_API_KEY>` header.
 
 ## Health
 
@@ -41,7 +41,7 @@ re-sent after `OTP_RESEND_SECONDS` (60). Errors always look like `{ "success": f
 
 | Method | Endpoint | Auth | Description |
 |---|---|---|---|
-| POST | `/api/sensor-data` | `x-api-key` | ESP32 reading `{sensorId, slotId, occupied, distanceCm}` → updates slot + appends history, emits Socket.io update |
+| POST | `/api/sensor-data` | `x-device-key` | Virtual sensor reading `{sensorId, occupied, battery}` → updates slot + appends history, emits Socket.io update |
 
 ## Bookings — `/api/bookings`
 

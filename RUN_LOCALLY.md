@@ -12,7 +12,7 @@ Read it top to bottom once, then follow the steps. Estimated time: 20 minutes.
 PARQCO is not one program, it is **four programs that talk to each other**:
 
 ```
-ESP32 (or demo simulator)
+Virtual sensor simulator
         │  POST /api/sensor-data
         ▼
 Node.js backend (:5000) ──► MongoDB (database)
@@ -52,8 +52,8 @@ python --version   # need 3.10 or higher (3.11 ideal)
 
 ## Lesson 2 — The four secret files
 
-Every program reads its settings from a `.env` file (or `config.h` for the
-ESP32). The repo ships `.env.example` templates — copy each one, then fill
+Every program reads its settings from a `.env` file.
+The repo ships `.env.example` templates — copy each one, then fill
 in the blanks. **For local running you only need:**
 
 **`backend/.env`**
@@ -63,7 +63,7 @@ cp backend/.env.example backend/.env
 Fill in:
 - `MONGO_URI` — your Atlas connection string (the only real key needed locally)
 - `JWT_SECRET` — invent anything long, e.g. `my-dev-secret-12345`
-- `ESP32_API_KEY` — invent anything long, e.g. `dev-key-12345`
+- `DEVICE_API_KEY` — invent anything long, e.g. `dev-key-12345`
 - `ML_SERVICE_URL=http://localhost:8000`
 - `CORS_ORIGIN=http://localhost:5173`
 - `ADMIN_EMAIL=admin@parqco.local` / `ADMIN_PASSWORD=admin123` (your login)
@@ -81,7 +81,7 @@ cp frontend/.env.example frontend/.env
 ```
 Fill in: `VITE_API_URL=http://localhost:5000`
 
-**`firmware/config.h`** — not needed until you flash real hardware. Skip for now.
+**`DEVICE_API_KEY` in `backend/.env`** — must match the value the backend expects, or sensor readings are rejected with 401.
 
 > Teacher's rule: `.env` files are **never** committed to git. The `.gitignore`
 > already excludes them. If you ever paste a real key into a tracked file,
@@ -127,8 +127,8 @@ npm run dev
    SRS — a prediction system with no history cannot predict.
 3. Go to **AI Predictions**. You should see a 24-hour occupancy bar chart and
    a message like *"Parking occupancy will reach 86% around 6 PM"*.
-4. Go to **Admin → Enable demo mode**. The backend now pretends to be an ESP32,
-   flipping slot states every 8 seconds.
+4. In a new terminal, run `npm run simulate` in the `backend` folder. The simulator acts as a virtual ESP32,
+   flipping slot states every 3 seconds.
 5. Go to **Live Map**. Watch the grid change in real time — that is Socket.io
    pushing updates the instant the "sensor" reports. This is your whole system
    working with zero hardware.
@@ -136,7 +136,7 @@ npm run dev
 ## Lesson 5 — Understand the data flow (read this once)
 
 1. A sensor reading arrives at `POST /api/sensor-data` (protected by your
-   `ESP32_API_KEY` — try a wrong key and you get `401`; that is the security
+   `DEVICE_API_KEY` — try a wrong key and you get `401`; that is the security
    requirement from your SRS working).
 2. The backend updates the `slots` collection (live state) and appends to
    `sensordata` (history).
@@ -151,10 +151,10 @@ curl -s -X POST http://localhost:5000/api/auth/register \
   -H "Content-Type: application/json" \
   -d '{"name":"Ali","email":"ali@test.com","password":"secret12"}'
 
-# 2. Fake an ESP32 reading (this is exactly what the firmware sends)
+# 2. Send a sensor reading by hand (exactly what the virtual simulator sends)
 curl -s -X POST http://localhost:5000/api/sensor-data \
-  -H "Content-Type: application/json" -H "x-api-key: dev-key-12345" \
-  -d '{"sensorId":"esp32-01","slotId":"A1","occupied":true,"distanceCm":42}'
+  -H "Content-Type: application/json" -H "x-device-key: dev-key-12345" \
+  -d '{"sensorId":"SENSOR_A101","occupied":1,"battery":87}'
 
 # 3. See it live
 curl -s http://localhost:5000/api/slots/stats
@@ -175,6 +175,6 @@ curl -s http://localhost:5000/api/slots/stats
 ## Homework
 
 - [ ] Book a slot as a normal user, then try to double-book the same time — you should get a `409` conflict. (That is your booking requirement, tested.)
-- [ ] Turn demo mode off, `POST` a few `/api/sensor-data` readings by hand, watch the Live Map.
+- [ ] Stop the simulator (Ctrl+C), then `POST` a few `/api/sensor-data` readings by hand, watch the Live Map.
 - [ ] Break something on purpose (wrong API key, bad `MONGO_URI`) and read the error. Error messages are documentation.
 - [ ] When this all feels easy, open DEPLOY.md — it is the same system, just on cloud computers.

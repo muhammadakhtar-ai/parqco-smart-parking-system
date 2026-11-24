@@ -13,7 +13,6 @@ Deploy the full system on free tiers: **MongoDB Atlas** (database) +
 - A MongoDB Atlas account (free M0) — mongodb.com/atlas
 - A Render account (free) — render.com
 - A Vercel account (free) — vercel.com
-- Arduino IDE + ESP32 board for the firmware step
 
 ## 1. Database — MongoDB Atlas
 
@@ -48,7 +47,7 @@ git push -u origin main
    |-----|-------|
    | `MONGO_URI` | Atlas string from step 1 |
    | `JWT_SECRET` | long random string (`openssl rand -hex 32`) |
-   | `ESP32_API_KEY` | another long random string — **save it, firmware needs the same value** |
+   | `DEVICE_API_KEY` | another long random string — **save it - the virtual sensor simulator uses the same value** |
    | `ML_SERVICE_URL` | from step 4 (add after) — use Render's internal URL, e.g. `http://parqco-ml:8000`, or the public URL |
    | `CORS_ORIGIN` | your Vercel URL from step 5 (add after), e.g. `https://parqco.vercel.app` |
    | `ADMIN_EMAIL` / `ADMIN_PASSWORD` | your admin login |
@@ -80,20 +79,12 @@ git push -u origin main
 
 1. **Admin → Generate sample history + train** — creates 28 days of history
    and trains the prediction model (~30 seconds).
-2. **Admin → Enable demo mode** (optional) — simulates sensors until hardware is live.
+2. Run the virtual sensor simulator locally (optional, for demos) - see section 7.
 3. Check **AI Predictions** — you should see the 24h occupancy chart and a peak message.
 
-## 7. ESP32 firmware
+## 7. IoT layer - virtual sensors only
 
-1. `cp firmware/config.example.h firmware/config.h` and fill in:
-   - `WIFI_SSID` / `WIFI_PASSWORD` — 2.4 GHz WiFi
-   - `BACKEND_URL` — e.g. `"https://parqco-api.onrender.com"` (no trailing slash)
-   - `API_KEY` — **exactly** the `ESP32_API_KEY` from step 3
-   - Adjust `NUM_SLOTS`, pins, and `SLOT_IDS` for your wiring
-2. Arduino IDE → install **esp32** board package + **ArduinoJson** library.
-3. Select board + port → Upload. Open Serial Monitor (115200) to watch readings.
-4. Disable demo mode in Admin — live sensor data takes over.
-
+This deployment has no firmware step and no sensor hardware. Occupancy readings come from the virtual sensor simulator (`backend/scripts/simulate-sensors.js`), which runs locally against a local API: start the API locally, then run `npm run simulate` in the `backend` folder (see README, "IoT layer - virtual sensors"). The simulator and the backend must share the same `DEVICE_API_KEY` value.
 ## 8. Verify production
 
 ```bash
@@ -110,14 +101,11 @@ curl "$API/api/predictions?hours=24" | head -c 200
 | Frontend shows network errors | `VITE_API_URL` wrong or not redeployed after changing it |
 | CORS errors in browser console | `CORS_ORIGIN` must exactly match the Vercel URL (no trailing slash) |
 | Predictions page: "No prediction data yet" | Admin → Generate sample history + train |
-| ESP32 HTTP -1 / connection failed | Backend URL must be `https://` public URL; check WiFi (2.4 GHz) |
-| ESP32 HTTP 401 | `API_KEY` in `config.h` ≠ `ESP32_API_KEY` in backend env |
-| Backend won't start | Check Render logs — usually a missing env var (`MONGO_URI`, `JWT_SECRET`, `ESP32_API_KEY` are required) |
+| Backend won't start | Check Render logs — usually a missing env var (`MONGO_URI`, `JWT_SECRET`, `DEVICE_API_KEY` are required) |
 | Render free tier sleeps | First request after idle takes ~50s to wake. For demo day, hit `/api/health` a few minutes early |
 
 ## Demo-day checklist
 
 - [ ] Hit `/api/health` 5 min before to wake Render
-- [ ] Decide: hardware live **or** Admin → demo mode ON (not both fighting)
+- [ ] Decide: run the virtual sensor simulator locally **or** use Admin → manual slot updates only (not both at the same time)
 - [ ] Backup: screen-record one full walkthrough the night before
-- [ ] Phone hotspot as backup WiFi for the ESP32

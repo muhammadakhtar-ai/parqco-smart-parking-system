@@ -5,7 +5,7 @@ model, run on 2026-10-09 with the script `ml-service/evaluate.py`.
 **What this is not:** an accuracy claim about real parking behaviour. All data
 below is the *simulated seed data* the system generates for development
 (`ml-service/app.py`, `_seed_history`). Re-run the same script against real
-sensor history once the ESP32 has collected several weeks of readings, and
+sensor history once the virtual sensor simulator has collected several weeks of readings, and
 quote those numbers instead.
 
 ## Method
