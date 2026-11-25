@@ -1,6 +1,7 @@
 import { useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import AuthShell from '../components/AuthShell.jsx';
+import { Eye, EyeOff } from 'lucide-react';
 import { Alert } from '../components/Feedback.jsx';
 import { useAuth } from '../context/AuthContext.jsx';
 import { errorMessage } from '../utils/format.js';
@@ -12,6 +13,7 @@ export default function Login() {
   const [form, setForm] = useState({ email: '', password: '' });
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [showPassword, setShowPassword] = useState(false);
 
   // Set by the Register and ForgotPassword pages after they finish.
   const notice = location.state?.registered
@@ -53,7 +55,7 @@ export default function Login() {
         </label>
         <label className="field">
           <span>Password</span>
-          <input className="input" type="password" autoComplete="current-password" placeholder="Your password" value={form.password} onChange={update('password')} required />
+          <span style={{ position: 'relative', display: 'block' }}><input className="input" type={showPassword ? 'text' : 'password'} autoComplete="current-password" placeholder="Your password" value={form.password} onChange={update('password')} required style={{ paddingRight: '2.6rem' }} /><button type="button" onClick={() => setShowPassword(!showPassword)} aria-label={showPassword ? 'Hide password' : 'Show password'} style={{ position: 'absolute', right: '0.55rem', top: '50%', transform: 'translateY(-50%)', background: 'none', border: 'none', padding: 0, cursor: 'pointer', display: 'flex', color: '#667085' }}>{showPassword ? <EyeOff size={19} /> : <Eye size={19} />}</button></span>
         </label>
         <div style={{ textAlign: 'right', marginTop: '-0.25rem' }}>
           <Link to="/forgot-password">Forgot password?</Link>
@@ -61,13 +63,13 @@ export default function Login() {
         <button className="btn btn-primary btn-block" disabled={submitting}>{submitting ? 'Signing in…' : 'Sign in'}</button>
       </form>
 
-      <div className="demo-box">
+      {import.meta.env.DEV && (<div className="demo-box">
         <p>Trying it locally? Use a demo account:</p>
         <div>
           <button type="button" className="btn btn-ghost btn-sm" onClick={() => fillDemo('demo@parqco.com', 'Demo@123')}>Demo driver</button>
           <button type="button" className="btn btn-ghost btn-sm" onClick={() => fillDemo('admin@parqco.com', 'Admin@123')}>Admin</button>
         </div>
-      </div>
+      </div>)}
     </AuthShell>
   );
 }
