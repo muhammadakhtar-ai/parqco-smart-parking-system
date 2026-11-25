@@ -21,6 +21,7 @@ router.post('/auth/register', otpLimiter, validate(auth.registerSchema), auth.re
 router.post('/auth/verify-otp', otpLimiter, validate(auth.verifyOtpSchema), auth.verifyRegistration);
 router.post('/auth/resend-otp', otpLimiter, validate(auth.resendOtpSchema), auth.resendOtp);
 router.post('/auth/forgot-password', otpLimiter, validate(auth.forgotPasswordSchema), auth.forgotPassword);
+router.post('/auth/verify-reset-otp', otpLimiter, validate(auth.verifyOtpSchema), auth.verifyResetOtp);
 router.post('/auth/reset-password', otpLimiter, validate(auth.resetPasswordSchema), auth.resetPassword);
 router.post('/auth/login', loginLimiter, validate(auth.loginSchema), auth.login);
 router.get('/auth/me', protect, auth.me);

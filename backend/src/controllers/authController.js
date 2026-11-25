@@ -99,6 +99,12 @@ export const forgotPassword = asyncHandler(async (req, res) => {
   res.json({ success: true, message: 'If that email is registered, a reset code has been sent.', resendAfter: env.otp.resendSeconds });
 });
 
+export const verifyResetOtp = asyncHandler(async (req, res) => {
+  const { email, otp } = req.body;
+  await verifyOtp({ email, purpose: 'reset', code: otp });
+  res.json({ success: true, message: 'Code verified. You can now set a new password.' });
+});
+
 export const resetPassword = asyncHandler(async (req, res) => {
   const { email, otp, newPassword } = req.body;
   const record = await verifyOtp({ email, purpose: 'reset', code: otp });

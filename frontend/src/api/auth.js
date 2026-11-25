@@ -5,4 +5,5 @@ export const registerUser = (data) => api.post('/auth/register', data);
 export const verifyRegistration = (email, otp) => api.post('/auth/verify-otp', { email, otp });
 export const resendOtp = (email, purpose) => api.post('/auth/resend-otp', { email, purpose });
 export const forgotPassword = (email) => api.post('/auth/forgot-password', { email });
+export const verifyResetOtp = (email, otp) => api.post('/auth/verify-reset-otp', { email, otp });
 export const resetPassword = (data) => api.post('/auth/reset-password', data);
