@@ -1,11 +1,12 @@
-import { useEffect, useState } from 'react';
+﻿import { useEffect, useState } from 'react';
 import { Link } from 'react-router-dom';
 import { Radio, MapPinned, CalendarCheck, LineChart, ShieldCheck, Smartphone } from 'lucide-react';
 import api from '../api/client.js';
 import { useAuth } from '../context/AuthContext.jsx';
+import AboutSection from '../components/AboutSection.jsx';
 
 /** Turns the public summary numbers into a list of bay statuses for the hero illustration. */
-function buildHeroBays(summary, count = 20) {
+function buildHeroBays(summary, count = 60) {
   if (!summary || !summary.total) return Array(count).fill('available');
   const scale = count / summary.total;
   const occupied = Math.round(summary.occupied * scale);
@@ -23,7 +24,7 @@ function buildHeroBays(summary, count = 20) {
 }
 
 const steps = [
-  { icon: Radio, title: 'Sensors watch every bay', text: 'An ultrasonic sensor on each slot reports whether a car is there, within seconds.' },
+  { icon: Radio, title: 'Sensors watch every bay', text: 'A virtual sensor on each slot reports whether a car is there, within seconds.' },
   { icon: MapPinned, title: 'You see the live map', text: 'The dashboard shows which bays are free on every floor, with no refresh needed.' },
   { icon: CalendarCheck, title: 'Reserve your bay', text: 'Pick a time and a slot. Nobody else can book it for those hours.' },
   { icon: LineChart, title: 'Plan with the forecast', text: 'Our model learns from past occupancy and tells you when the lot will be busy.' },
@@ -31,7 +32,7 @@ const steps = [
 
 const features = [
   { icon: Radio, title: 'Real-time slot detection', text: 'Virtual IoT sensors push every change to the server instantly.' },
-  { icon: LineChart, title: 'AI peak-hour forecasts', text: 'Hourly occupancy predictions with a confidence score, based on four weeks of history.' },
+  { icon: LineChart, title: 'AI peak-hour forecasts', text: 'Hourly occupancy predictions with a confidence score, based on the lot’s sensor history.' },
   { icon: Smartphone, title: 'Works on any screen', text: 'A responsive web app for drivers on phones and for staff at the front desk.' },
   { icon: ShieldCheck, title: 'Admin control panel', text: 'Manage slots, bookings, users and sensor health from one place.' },
 ];
@@ -54,7 +55,7 @@ export default function Landing() {
           <div className="hero__copy">
             <h1>Know which bay is free before you leave home.</h1>
             <p>
-              PARQCO connects sensors in every parking slot to a live map, instant booking and an AI forecast of
+              PARQCO connects virtual sensors in every parking slot to a live map, instant booking and an AI forecast of
               the busiest hours. Less circling, less waiting, less traffic.
             </p>
             <div className="hero__cta">
@@ -119,6 +120,8 @@ export default function Landing() {
           </ul>
         </div>
       </section>
+
+      <AboutSection />
 
       <section className="section">
         <div className="container cta-band">

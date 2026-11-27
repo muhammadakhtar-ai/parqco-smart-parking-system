@@ -37,86 +37,104 @@ export default function Predictions() {
 
   const averageConfidence = Math.round(forecast.points.reduce((sum, point) => sum + point.confidence, 0) / forecast.points.length);
 
+  // Honest empty-state: below 3 days of history, any "peak" or "confidence"
+  // number would be invented — so the page says it is still learning instead.
+  const hasData = forecast.sampleDays >= 3;
+
   return (
     <div className="container page">
       <PageHeader title="Parking forecast" subtitle={`Predicted occupancy for today, learned from ${forecast.sampleDays} days of sensor data.`} />
 
-      <div className="stats">
-        <StatCard label="Busiest window" value={forecast.peak.label} note="Highest expected demand" />
-        <StatCard label="Peak occupancy" value={`${forecast.peak.occupancy}%`} tone="busy" note="Share of slots in use" />
-        <StatCard label="Model confidence" value={`${averageConfidence}%`} tone="free" note={`Model ${forecast.modelVersion}`} />
-      </div>
-
-      <section className="card">
-        <div className="card__head">
-          <h2>Hourly occupancy today</h2>
-          <ul className="legend">
-            <li><i className="legend__dot legend__dot--peak" />Peak window</li>
-            <li><i className="legend__dot legend__dot--now" />Now</li>
-          </ul>
-        </div>
-        <ForecastChart forecast={forecast} />
-      </section>
-
-      <section className="card">
-        <div className="card__head">
-          <h2>Which slot will be free?</h2>
-          <label className="field">
-            <span>In how many hours?</span>
-            <select className="input" value={hoursAhead} onChange={(e) => setHoursAhead(Number(e.target.value))}>
-              {[1, 2, 3, 4, 5, 6, 7, 8].map((value) => <option key={value} value={value}>{value} {value === 1 ? 'hour' : 'hours'}</option>)}
-            </select>
-          </label>
-        </div>
-        {slotPrediction ? (
-          <>
-            <p className="muted">
-              At {formatDateTime(slotPrediction.at)} — <strong>{slotPrediction.likelyFreeCount} of {slotPrediction.totalSlots} slots</strong> likely free.
-              Slots marked "Booked until" are exact (real bookings). The percentages are chances from each slot's own last-28-days history — a likelihood, not a promise.
-            </p>
-            <ul className="mini-list">
-              {slotPrediction.slots.slice(0, 10).map((slot) => (
-                <li key={slot.slotId}>
-                  <strong>{slot.slotId}</strong>
-                  <span>
-                    {slot.state === 'booked'
-                      ? `Booked until ${formatDateTime(slot.bookedUntil)} (exact)`
-                      : slot.state === 'maintenance'
-                        ? 'Under maintenance'
-                        : `${Math.round(slot.probabilityFree * 100)}% chance free · ${slot.zone}`}
-                  </span>
-                </li>
-              ))}
-            </ul>
-          </>
-        ) : (
-          <p className="muted">Loading slot prediction…</p>
-        )}
-      </section>
-
-      <div className="two-col">
+      {!hasData ? (
         <section className="card">
-          <h2>What to expect</h2>
-          <ul className="insights">
-            {forecast.insights.map((insight) => (
-              <li key={insight}><Lightbulb size={18} /><span>{insight}</span></li>
-            ))}
-          </ul>
+          <h2>Forecast is still learning</h2>
+          <p className="muted">
+            PARQCO needs a few days of sensor history before it can forecast honestly — right now it has
+            {' '}{forecast.sampleDays} day{forecast.sampleDays === 1 ? '' : 's'}. Rather than invent numbers,
+            this page will start showing peak windows, confidence and per-slot predictions once enough
+            real readings have been collected. The live lot and booking work normally in the meantime.
+          </p>
         </section>
+      ) : (
+        <>
+          <div className="stats">
+            <StatCard label="Busiest window" value={forecast.peak.label} note="Highest expected demand" />
+            <StatCard label="Peak occupancy" value={`${forecast.peak.occupancy}%`} tone="busy" note="Share of slots in use" />
+            <StatCard label="Model confidence" value={`${averageConfidence}%`} tone="free" note={`Model ${forecast.modelVersion}`} />
+          </div>
 
-        <section className="card">
-          <h2>Busiest hour by weekday</h2>
-          <ResponsiveContainer width="100%" height={220}>
-            <BarChart data={weekly} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
-              <CartesianGrid stroke="#E3E5E1" vertical={false} />
-              <XAxis dataKey="day" tickLine={false} axisLine={false} fontSize={12} />
-              <YAxis domain={[0, 100]} tickFormatter={(v) => `${v}%`} tickLine={false} axisLine={false} fontSize={12} />
-              <Tooltip formatter={(value, _name, item) => [`${value}% at ${item.payload.peakLabel}`, 'Peak']} />
-              <Bar dataKey="occupancy" fill="#16191F" radius={[4, 4, 0, 0]} />
-            </BarChart>
-          </ResponsiveContainer>
-        </section>
-      </div>
+          <section className="card">
+            <div className="card__head">
+              <h2>Hourly occupancy today</h2>
+              <ul className="legend">
+                <li><i className="legend__dot legend__dot--peak" />Peak window</li>
+                <li><i className="legend__dot legend__dot--now" />Now</li>
+              </ul>
+            </div>
+            <ForecastChart forecast={forecast} />
+          </section>
+
+          <section className="card">
+            <div className="card__head">
+              <h2>Which slot will be free?</h2>
+              <label className="field">
+                <span>In how many hours?</span>
+                <select className="input" value={hoursAhead} onChange={(e) => setHoursAhead(Number(e.target.value))}>
+                  {[1, 2, 3, 4, 5, 6, 7, 8].map((value) => <option key={value} value={value}>{value} {value === 1 ? 'hour' : 'hours'}</option>)}
+                </select>
+              </label>
+            </div>
+            {slotPrediction ? (
+              <>
+                <p className="muted">
+                  At {formatDateTime(slotPrediction.at)} — <strong>{slotPrediction.likelyFreeCount} of {slotPrediction.totalSlots} slots</strong> likely free.
+                  Slots marked "Booked until" are exact (real bookings). The percentages are chances from each slot's own last-28-days history — a likelihood, not a promise.
+                </p>
+                <ul className="mini-list">
+                  {slotPrediction.slots.slice(0, 10).map((slot) => (
+                    <li key={slot.slotId}>
+                      <strong>{slot.slotId}</strong>
+                      <span>
+                        {slot.state === 'booked'
+                          ? `Booked until ${formatDateTime(slot.bookedUntil)} (exact)`
+                          : slot.state === 'maintenance'
+                            ? 'Under maintenance'
+                            : `${Math.round(slot.probabilityFree * 100)}% chance free · ${slot.zone}`}
+                      </span>
+                    </li>
+                  ))}
+                </ul>
+              </>
+            ) : (
+              <p className="muted">Loading slot prediction…</p>
+            )}
+          </section>
+
+          <div className="two-col">
+            <section className="card">
+              <h2>What to expect</h2>
+              <ul className="insights">
+                {forecast.insights.map((insight) => (
+                  <li key={insight}><Lightbulb size={18} /><span>{insight}</span></li>
+                ))}
+              </ul>
+            </section>
+
+            <section className="card">
+              <h2>Busiest hour by weekday</h2>
+              <ResponsiveContainer width="100%" height={220}>
+                <BarChart data={weekly} margin={{ top: 8, right: 8, left: -20, bottom: 0 }}>
+                  <CartesianGrid stroke="#E3E5E1" vertical={false} />
+                  <XAxis dataKey="day" tickLine={false} axisLine={false} fontSize={12} />
+                  <YAxis domain={[0, 100]} tickFormatter={(v) => `${v}%`} tickLine={false} axisLine={false} fontSize={12} />
+                  <Tooltip formatter={(value, _name, item) => [`${value}% at ${item.payload.peakLabel}`, 'Peak']} />
+                  <Bar dataKey="occupancy" fill="#16191F" radius={[4, 4, 0, 0]} />
+                </BarChart>
+              </ResponsiveContainer>
+            </section>
+          </div>
+        </>
+      )}
     </div>
   );
 }
