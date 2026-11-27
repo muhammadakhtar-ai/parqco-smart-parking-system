@@ -30,6 +30,7 @@ router.get('/auth/me', protect, auth.me);
 router.get('/slots/summary', slots.getSummary); // public (landing page)
 router.get('/slots/availability', protect, slots.checkAvailability);
 router.get('/slots', protect, slots.listSlots);
+router.post('/slots/auto-generate', protect, validate(slots.autoGenerateSchema), slots.autoGenerateSlot);
 router.post('/slots', ...adminOnly, validate(slots.slotSchema), slots.createSlot);
 router.put('/slots/:id', ...adminOnly, validate(slots.slotSchema.partial()), slots.updateSlot);
 router.delete('/slots/:id', ...adminOnly, slots.deleteSlot);
@@ -48,6 +49,7 @@ router.get('/sensors', ...adminOnly, sensors.sensorOverview);
 // ML predictions
 router.get('/predictions/today', protect, predictions.todayForecast);
 router.get('/predictions/weekly', protect, predictions.weeklyPeaks);
+router.get('/predictions/slots', protect, predictions.slotPredictions);
 
 // Admin
 router.get('/admin/stats', ...adminOnly, admin.getStats);

@@ -1,4 +1,4 @@
-import { z } from 'zod';
+﻿import { z } from 'zod';
 import Slot from '../models/Slot.js';
 import SensorData from '../models/SensorData.js';
 import { ApiError } from '../utils/ApiError.js';
@@ -18,6 +18,19 @@ export const ingestReading = asyncHandler(async (req, res) => {
 
   const slot = await Slot.findOne({ sensorId });
   if (!slot) throw new ApiError(404, `No parking slot is linked to sensor ${sensorId}.`);
+
+  // Manual override: an admin controls this slot. Ignore the reading
+  // completely — do not save it and do not change the slot's status,
+  // so manual changes never pollute the ML training history.
+  if (slot.controlMode === 'manual') {
+    return res.json({
+      success: true,
+      ignored: true,
+      reason: 'Slot is under manual admin control.',
+      slotId: slot.slotId,
+      status: slot.status,
+    });
+  }
 
   // 1. Keep every reading – this history trains the ML model
   await SensorData.create({ sensorId, slotId: slot.slotId, occupied, battery });

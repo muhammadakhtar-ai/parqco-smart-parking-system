@@ -4,6 +4,7 @@
  *   2. Run:  npm run simulate
  * Every few seconds a random parking slot changes state, exactly like a real sensor
  * calling POST /api/sensor-data. Watch the dashboard update live.
+ * Slots in maintenance, and slots an admin controls manually, are never touched.
  */
 import dotenv from 'dotenv';
 dotenv.config();
@@ -25,7 +26,10 @@ async function loginAsAdmin() {
 
 async function loadSlots(token) {
   const response = await fetch(`${API}/slots`, { headers: { Authorization: `Bearer ${token}` } });
-  return (await response.json()).slots.filter((slot) => slot.status !== 'maintenance');
+  // Skip maintenance slots and slots under manual admin control.
+  return (await response.json()).slots.filter(
+    (slot) => slot.status !== 'maintenance' && slot.controlMode !== 'manual'
+  );
 }
 
 async function sendReading(slot, occupied) {
