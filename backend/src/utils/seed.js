@@ -12,7 +12,8 @@ import { nextChallanNumber } from './challan.js';
 /**
  * Demo data so the app looks alive on first run:
  *  - an admin and a demo driver
- *  - 30 parking slots over 3 floors, each linked to a sensor
+ *  - 60 parking slots over 6 floors / 6 zones (10 slots per zone, A-101 to F-610),
+ *    each linked to a virtual sensor — this matches backend/src/config/zones.js
  *  - 28 days of hourly sensor history (this is what the ML forecast learns from)
  *  - a couple of bookings for the demo driver
  */
@@ -29,6 +30,9 @@ function buildSlots() {
     { floor: 1, zone: 'Zone A', letter: 'A', base: 101 },
     { floor: 2, zone: 'Zone B', letter: 'B', base: 201 },
     { floor: 3, zone: 'Zone C', letter: 'C', base: 301 },
+    { floor: 4, zone: 'Zone D', letter: 'D', base: 401 },
+    { floor: 5, zone: 'Zone E', letter: 'E', base: 501 },
+    { floor: 6, zone: 'Zone F', letter: 'F', base: 601 },
   ];
   return floors.flatMap(({ floor, zone, letter, base }) =>
     Array.from({ length: 10 }, (_, index) => {
@@ -38,6 +42,8 @@ function buildSlots() {
         zone,
         floor,
         sensorId: `SENSOR_${letter}${number}`,
+        controlMode: 'auto',
+        sensorType: 'virtual',
         hourlyRate: floor === 1 ? 150 : 100, // ground floor is closest to the exit
         status: 'available',
       };
