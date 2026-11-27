@@ -10,6 +10,7 @@ import FloorTabs from '../components/FloorTabs.jsx';
 import ParkingLot from '../components/ParkingLot.jsx';
 import Legend from '../components/Legend.jsx';
 import ForecastChart from '../components/ForecastChart.jsx';
+import NextFreeBanner from '../components/NextFreeBanner.jsx';
 import { Alert, Loading } from '../components/Feedback.jsx';
 import { formatDateTime } from '../utils/format.js';
 import ChatAssistant from '../components/ChatAssistant';
@@ -62,6 +63,8 @@ export default function Dashboard() {
         <StatCard label="Reserved" value={count('reserved')} tone="reserved" icon={Clock} />
       </div>
 
+      <NextFreeBanner />
+
       <div className="dashboard-grid">
         <section className="card">
           <div className="card__head">
@@ -108,5 +111,3 @@ export default function Dashboard() {
     </div>
   );
 }
-
-

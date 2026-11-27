@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useMemo, useState } from 'react';
+﻿import { useCallback, useEffect, useMemo, useState } from 'react';
 import api from '../api/client.js';
 import { useAuth } from '../context/AuthContext.jsx';
 import BookingConfirmation from '../components/BookingConfirmation.jsx';
@@ -24,6 +24,8 @@ export default function BookSlot() {
   const [selected, setSelected] = useState(null);
   const [error, setError] = useState('');
   const [submitting, setSubmitting] = useState(false);
+  const [generating, setGenerating] = useState(false);
+  const [generatedMsg, setGeneratedMsg] = useState('');
 
   // End time is always start + duration
   const startDate = useMemo(() => new Date(start), [start]);
@@ -64,6 +66,27 @@ export default function BookSlot() {
       setError(errorMessage(err));
     } finally {
       setSubmitting(false);
+    }
+  };
+
+  // Ask the system for a new virtual slot. The server first re-checks that
+  // every slot really is busy for this window and that the lot is below the
+  // 60-slot maximum — only then does it create one.
+  const handleAutoGenerate = async () => {
+    setError('');
+    setGeneratedMsg('');
+    setGenerating(true);
+    try {
+      const { data } = await api.post('/slots/auto-generate', {
+        start: startDate.toISOString(),
+        end: endDate.toISOString(),
+      });
+      setGeneratedMsg(data.message);
+      loadAvailability(); // the new slot (if created) now appears on the map
+    } catch (err) {
+      setError(errorMessage(err));
+    } finally {
+      setGenerating(false);
     }
   };
 
@@ -122,6 +145,15 @@ export default function BookSlot() {
               getHint={(slot) => (slot.bookable ? `Available · ${formatMoney(slot.hourlyRate)}/hour` : slot.unavailableReason)}
             />
             <Legend items={['available', 'occupied', 'reserved', 'selected']} />
+            {freeCount === 0 && slots.length > 0 && (
+              <div>
+                <p className="muted">No slot is free for this time. If every slot is busy and the lot is below its 60-slot maximum, the system can generate a new virtual slot for you — its zone, floor and fee are chosen automatically.</p>
+                <button className="btn btn-primary" disabled={generating} onClick={handleAutoGenerate}>
+                  {generating ? 'Checking…' : 'Generate a new slot for me'}
+                </button>
+              </div>
+            )}
+            {generatedMsg && <p className="muted">{generatedMsg}</p>}
           </section>
         </div>
 

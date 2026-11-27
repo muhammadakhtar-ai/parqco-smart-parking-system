@@ -1,4 +1,4 @@
-import { useCallback, useEffect, useState } from 'react';
+﻿import { useCallback, useEffect, useState } from 'react';
 import { Pencil, Plus, Trash2, X } from 'lucide-react';
 import api from '../../api/client.js';
 import PageHeader from '../../components/PageHeader.jsx';
@@ -6,7 +6,7 @@ import DataTable from '../../components/DataTable.jsx';
 import { Alert, Loading } from '../../components/Feedback.jsx';
 import { errorMessage, formatMoney } from '../../utils/format.js';
 
-const EMPTY_FORM = { slotId: '', zone: 'Zone A', floor: 1, sensorId: '', hourlyRate: 100, status: 'available' };
+const EMPTY_FORM = { slotId: '', zone: 'Zone A', floor: 1, sensorId: '', hourlyRate: 100, status: 'available', controlMode: 'auto', sensorType: 'virtual' };
 
 export default function AdminSlots() {
   const [slots, setSlots] = useState([]);
@@ -29,7 +29,16 @@ export default function AdminSlots() {
 
   const openNew = () => { setForm(EMPTY_FORM); setEditing({}); setError(''); };
   const openEdit = (slot) => {
-    setForm({ slotId: slot.slotId, zone: slot.zone, floor: slot.floor, sensorId: slot.sensorId, hourlyRate: slot.hourlyRate, status: slot.status });
+    setForm({
+      slotId: slot.slotId,
+      zone: slot.zone,
+      floor: slot.floor,
+      sensorId: slot.sensorId,
+      hourlyRate: slot.hourlyRate,
+      status: slot.status,
+      controlMode: slot.controlMode || 'auto',
+      sensorType: slot.sensorType || 'virtual',
+    });
     setEditing(slot);
     setError('');
   };
@@ -66,6 +75,7 @@ export default function AdminSlots() {
     { header: 'Sensor', render: (slot) => slot.sensorId },
     { header: 'Rate', render: (slot) => `${formatMoney(slot.hourlyRate)}/h` },
     { header: 'Status', render: (slot) => <span className={`pill pill--${slot.liveStatus}`}>{slot.liveStatus}</span> },
+    { header: 'Control', render: (slot) => (slot.controlMode === 'manual' ? 'Manual (admin)' : 'Auto (virtual sensor)') },
     {
       header: 'Actions',
       render: (slot) => (
@@ -79,7 +89,7 @@ export default function AdminSlots() {
 
   return (
     <>
-      <PageHeader title="Parking slots" subtitle="Add, edit or remove bays and link them to sensors." actions={<button className="btn btn-primary" onClick={openNew}><Plus size={18} /> Add slot</button>} />
+      <PageHeader title="Parking slots" subtitle="Add, edit or remove bays. Sensors are virtual (simulated) — no physical devices are installed." actions={<button className="btn btn-primary" onClick={openNew}><Plus size={18} /> Add slot</button>} />
       {!editing && <Alert>{error}</Alert>}
       <DataTable columns={columns} rows={slots} />
 
@@ -110,6 +120,23 @@ export default function AdminSlots() {
                 </select>
               </label>
             </div>
+            <div className="form form--row">
+              <label className="field">
+                <span>Control mode</span>
+                <select className="input" value={form.controlMode} onChange={update('controlMode')}>
+                  <option value="auto">Auto (virtual sensor decides)</option>
+                  <option value="manual">Manual (admin decides — sensor is ignored)</option>
+                </select>
+              </label>
+              <label className="field">
+                <span>Sensor type</span>
+                <select className="input" value={form.sensorType} onChange={update('sensorType')}>
+                  <option value="virtual">Virtual (simulated)</option>
+                  <option value="real">Real device</option>
+                </select>
+              </label>
+            </div>
+            <p className="muted small">Tip: changing the Status above also switches the slot to Manual automatically, so the simulator cannot overwrite your setting. Set Control mode back to Auto to hand the slot back to the sensor.</p>
             <div className="modal__foot">
               <button type="button" className="btn btn-ghost" onClick={() => setEditing(null)}>Cancel</button>
               <button className="btn btn-primary">Save slot</button>
